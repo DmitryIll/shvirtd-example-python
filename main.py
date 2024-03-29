@@ -39,7 +39,7 @@ def index():
     # Запись в базу данных
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-    query = "INSERT INTO {db_table} (request_date, request_ip) VALUES (%s, %s)"
+    query = f"""INSERT INTO {db_table} (request_date, request_ip) VALUES (%s, %s)"""
     values = (current_time, ip_address)
     cursor.execute(query, values)
     db.commit()
