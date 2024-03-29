@@ -29,7 +29,82 @@ docker build  -f Dockerfile.python -t mydoc .
 
 
 3. (Необязательная часть, *) Изучите инструкцию в проекте и запустите web-приложение без использования docker в venv. (Mysql БД можно запустить в docker run).
+
+_Вот что сделал:_
+_Создал файл компоса:_
+
+```
+version: '3.7'
+
+# Use root/example as user/password credentials
+services:
+
+  mysql:
+    image: mysql
+    # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
+    # (this is just an example, not intended to be a production configuration)
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    #env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 12345
+    ports:
+      - 3306:3306
+    volumes:
+      - ./docker_volumes/mysql:/var/lib/mysql
+    networks:
+      docker-net:
+        ipv4_address: 172.20.0.10
+
+networks:
+  docker-net:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.20.0.0/24
+```
+
+_Запустил - подня докер контейнер с MYSQL установил:_
+
+```
+export DB_HOST=172.20.0.10 \
+export DB_USER=root \
+export DB_PASSWORD=12345 \
+export DB_NAME=db1
+
+apt install python3.10-venv
+python3 -m venv venv
+. venv/bin/activate
+pip install -r requirements.txt
+python main.py
+```
+_Сделал запрос на внешний адрес и 5000 порт:_
+
+![alt text](image-2.png)
+
+_Но, последующие запросы уже не шли. Вот что было в выводе:_
+
+![alt text](image-3.png)
+
+_И почему-то с пользователем user не заработало, а спользователем root заработало._
+
+
+
 4. (Необязательная часть, *) По образцу предоставленного python кода внесите в него исправление для управления названием используемой таблицы через ENV переменную.
+
+_правки:_
+
+```
+db_table=os.environ.get('DB_TABLE')
+...
+
+
+
+```
+
+
 ---
 ### ВНИМАНИЕ!
 !!! В процессе последующего выполнения ДЗ НЕ изменяйте содержимое файлов в fork-репозитории! Ваша задача ДОБАВИТЬ 5 файлов: ```Dockerfile.python```, ```compose.yaml```, ```.gitignore```, ```.dockerignore```,```bash-скрипт```. Если вам понадобилось внести иные изменения в проект - вы что-то делаете неверно!
