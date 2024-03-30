@@ -66,7 +66,17 @@ networks:
       - subnet: 172.20.0.0/24
 ```
 
-_Запустил - подня докер контейнер с MYSQL_
+```
+apt install mariadb-client-core-10.6
+mysql -p -h 172.20.0.10 -P 3306 -u root
+```
+
+```
+MySQL [(none)]> create database db1;
+```
+
+
+_Запустил - поднял докер контейнер с MYSQL_
 _через DBeaver создал db1 и запустил:_
 
 ```
@@ -148,6 +158,77 @@ export DB_TABLE=requests \
 3. Соберите и залейте в него образ с python приложением из задания №1.
 4. Просканируйте образ на уязвимости.
 5. В качестве ответа приложите отчет сканирования.
+
+### Решение
+
+
+docker build -t myapp -f Dockerfile.python .
+
+![alt text](image-10.png)
+![alt text](image-9.png)
+
+docker compose up -d
+
+![alt text](image-11.png)
+
+docker logs 5f321a9917f9
+![alt text](image-12.png)
+
+apt install mysql-client-core-8.0
+
+mysql -p -h 172.20.0.10 -P 3306 -u root --password=12345   --init-command="create database db1;"
+
+mysql> show databases;
+
+![alt text](image-13.png)
+
+docker compose up -d
+
+![alt text](image-14.png)
+
+![alt text](image-15.png)
+
+
+root@dp:~/shvirtd-example-python# curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+
+![alt text](image-16.png)
+
+yc container registry create --name test
+![alt text](image-17.png)
+
+yc container registry configure-docker
+![alt text](image-18.png)
+
+docker tag myapp cr.yandex/crp5gbscd8f2re1ga8ip/myapp:latest
+
+docker push cr.yandex/crp5gbscd8f2re1ga8ip/myapp
+
+![alt text](image-19.png)
+
+yc container image list --repository-name=crp5gbscd8f2re1ga8ip/myapp
+
+![alt text](image-20.png)
+
+yc container image scan crprcak0gm7fn41j9ik2
+
+началось сканирование образа:
+![alt text](image-8.png)
+
+![alt text](image-21.png)
+
+yc container image list-vulnerabilities --scan-result-id=chekusor1mibehitcpu6
+
+![alt text](image-22.png)
+
+Критическая уязвимость: https://avd.aquasec.com/nvd/2023/cve-2023-45853/
+
+
+Инструкция:
+https://yandex.cloud/ru/docs/container-registry/operations/scanning-docker-image
+
+
+
+
 
 ## Задача 3
 1. Изучите файл "proxy.yaml"
