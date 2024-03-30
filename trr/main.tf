@@ -76,6 +76,7 @@ resource "yandex_compute_instance" "vm" {
     "sudo apt-get update",
     "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
     "sudo chmod +x /root/proxy.yaml",
+    "apt install -y mariadb-client-core-10.6 ",
     "git clone https://github.com/DmitryIll/shvirtd-example-python.git"
     ]
   }
