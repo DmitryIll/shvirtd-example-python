@@ -5,12 +5,12 @@ include:
 # Use root/example as user/password credentials
 services:
 
-  mysql:
-    image: mysql
+  db:
+    image: mysql:8
     # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
     # (this is just an example, not intended to be a production configuration)
     command: --default-authentication-plugin=mysql_native_password
-    restart: always
+    restart: on-failure
     #env_file: .env
     environment:
       MYSQL_ROOT_PASSWORD: 12345
@@ -24,9 +24,9 @@ services:
       backend:
         ipv4_address: 172.20.0.10
 
-  app:
+  web:
     image: myapp
-    restart: always
+    restart: on-failure
     environment:
       - DB_HOST=172.20.0.10
       - DB_TABLE=requests
