@@ -1,4 +1,6 @@
 version: '3.7'
+include:
+  - proxy.yaml
 
 # Use root/example as user/password credentials
 services:
@@ -19,7 +21,7 @@ services:
     volumes:
       - ./docker_volumes/mysql:/var/lib/mysql
     networks:
-      docker-net:
+      backend:
         ipv4_address: 172.20.0.10
 
   app:
@@ -36,11 +38,11 @@ services:
     ports:
       - 5000:5000
     networks:
-      docker-net:
+      backend:
         ipv4_address: 172.20.0.5
 
 networks:
-  docker-net:
+  backend:
     driver: bridge
     ipam:
       config:
