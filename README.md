@@ -446,9 +446,54 @@ mysql> select * from db1.requests;
 Скачайте docker образ ```hashicorp/terraform:latest``` и скопируйте бинарный файл ```/bin/terraform``` на свою локальную машину, используя dive и docker save.
 Предоставьте скриншоты  действий .
 
+### Решение
+
+```
+docker pull hashicorp/terraform:latest
+```
+![alt text](image-32.png)
+
+![alt text](image-33.png)
+
+Нашел в каком слое появился файл терраформа:
+![alt text](image-34.png)
+
+слой sha256:b22c6fe345f979d4956c9570f757a0d13f1d7abf0b26121f3adfed2cf580c055
+
+
+Выгружаю образ:
+```
+docker save hashicorp/terraform -o image.tar
+```
+Распокавал:
+![alt text](image-35.png)
+
+Нашел нужный слой и распаковал его:
+
+![alt text](image-36.png)
+
+![alt text](image-37.png)
+
 ## Задача 6.1
 Добейтесь аналогичного результата, используя docker cp.  
 Предоставьте скриншоты  действий .
+
+Запускаю контейнер пусть даже с ошибкой:
+
+![alt text](image-38.png)
+
+смотрю контейнеры:
+
+![alt text](image-39.png)
+
+Далее копирую все из bin
+
+![alt text](image-40.png)
+
+или можно точнее сразу:
+
+![alt text](image-41.png)
+
 
 ## Задача 6.2 (**)
 Предложите способ извлечь файл из контейнера, используя только команду docker build и любой Dockerfile.  
