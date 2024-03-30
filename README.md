@@ -20,6 +20,22 @@
 * _создаю образ докера:_
 
 ```
+FROM python:3.9-slim
+
+ENV DB_HOST=172.20.0.10
+ENV DB_TABLE=requests
+ENV DB_USER=root
+ENV DB_NAME=db1
+ENV DB_PASSWORD=12345
+
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
+COPY main.py ./
+CMD ["python", "main.py"]
+```
+
+```
 docker build  -f Dockerfile.python -t mydoc .
 ```
 
@@ -99,7 +115,7 @@ _Но, последующие запросы уже не шли. Вот что �
 
 ![alt text](image-3.png)
 
-_И почему-то с пользователем user не заработало, а спользователем root заработало. видимо не хватает прав для user - нужно особо выдавать, не стал, а использовал root_
+С пользователем user не заработало, а спользователем root заработало, тк не хватает прав для user - нужно особо выдавать, не стал это делать, а использовал root_
 
 
 
@@ -149,74 +165,94 @@ export DB_TABLE=requests \
 
 ## Задача 2 (*)
 1. Создайте в yandex cloud container registry с именем "test" с помощью "yc tool" . [Инструкция](https://cloud.yandex.ru/ru/docs/container-registry/quickstart/?from=int-console-help)
-
-![alt text](image-7.png)
-
 2. Настройте аутентификацию вашего локального docker в yandex container registry.
-
-
 3. Соберите и залейте в него образ с python приложением из задания №1.
 4. Просканируйте образ на уязвимости.
 5. В качестве ответа приложите отчет сканирования.
 
 ### Решение
 
-
+```
 docker build -t myapp -f Dockerfile.python .
+```
 
 ![alt text](image-10.png)
 ![alt text](image-9.png)
 
+```
 docker compose up -d
+```
 
 ![alt text](image-11.png)
 
+```
 docker logs 5f321a9917f9
+```
+
 ![alt text](image-12.png)
 
+```
 apt install mysql-client-core-8.0
-
 mysql -p -h 172.20.0.10 -P 3306 -u root --password=12345   --init-command="create database db1;"
+```
 
+```
 mysql> show databases;
+```
 
 ![alt text](image-13.png)
 
+```
 docker compose up -d
+```
 
 ![alt text](image-14.png)
 
 ![alt text](image-15.png)
 
 
+```
 root@dp:~/shvirtd-example-python# curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+```
 
 ![alt text](image-16.png)
 
+```
 yc container registry create --name test
+```
 ![alt text](image-17.png)
 
+```
 yc container registry configure-docker
+```
+
 ![alt text](image-18.png)
 
+```
 docker tag myapp cr.yandex/crp5gbscd8f2re1ga8ip/myapp:latest
-
 docker push cr.yandex/crp5gbscd8f2re1ga8ip/myapp
+```
 
 ![alt text](image-19.png)
 
+```
 yc container image list --repository-name=crp5gbscd8f2re1ga8ip/myapp
+```
 
 ![alt text](image-20.png)
 
+```
 yc container image scan crprcak0gm7fn41j9ik2
+```
 
 началось сканирование образа:
 ![alt text](image-8.png)
 
 ![alt text](image-21.png)
 
+```
 yc container image list-vulnerabilities --scan-result-id=chekusor1mibehitcpu6
+```
 
 ![alt text](image-22.png)
 
