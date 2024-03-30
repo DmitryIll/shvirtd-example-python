@@ -34,7 +34,7 @@ services:
       - DB_NAME=db1
       - DB_PASSWORD=12345
     depends_on:
-      - mysql
+      - db
     ports:
       - 5000:5000
     networks:
