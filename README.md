@@ -269,26 +269,172 @@ https://yandex.cloud/ru/docs/container-registry/operations/scanning-docker-image
 ## Задача 3
 1. Изучите файл "proxy.yaml"
 2. Создайте в репозитории с проектом файл ```compose.yaml```. С помощью директивы "include" подключите к нему файл "proxy.yaml".
+_файл уже создал ранее, тут теперь его редактирую_
+
 3. Опишите в файле ```compose.yaml``` следующие сервисы: 
 
 - ```web```. Образ приложения должен ИЛИ собираться при запуске compose из файла ```Dockerfile.python``` ИЛИ скачиваться из yandex cloud container registry(из задание №2 со *). Контейнер должен работать в bridge-сети с названием ```backend``` и иметь фиксированный ipv4-адрес ```172.20.0.5```. Сервис должен всегда перезапускаться в случае ошибок.
 Передайте необходимые ENV-переменные для подключения к Mysql базе данных по сетевому имени сервиса ```web``` 
 
+код сервиа:
+
+```
+  web:
+    image: myapp
+    restart: on-failure
+    environment:
+      - DB_HOST=172.20.0.10
+      - DB_TABLE=requests
+      - DB_USER=root
+      - DB_NAME=db1
+      - DB_PASSWORD=12345
+    depends_on:
+      - db
+    ports:
+      - 5000:5000
+    networks:
+      backend:
+        ipv4_address: 172.20.0.5
+```
+
+
 - ```db```. image=mysql:8. Контейнер должен работать в bridge-сети с названием ```backend``` и иметь фиксированный ipv4-адрес ```172.20.0.10```. Явно перезапуск сервиса в случае ошибок. Передайте необходимые ENV-переменные для создания: пароля root пользователя, создания базы данных, пользователя и пароля для web-приложения.Обязательно используйте уже существующий .env file для назначения секретных ENV-переменных!
+
+код сервиса:
+```
+  db:
+    image: mysql:8
+    # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
+    # (this is just an example, not intended to be a production configuration)
+    command: --default-authentication-plugin=mysql_native_password
+    restart: on-failure
+    #env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 12345
+    ports:
+      - 3306:3306
+    volumes:
+      - ./docker_volumes/mysql:/var/lib/mysql
+    networks:
+      backend:
+        ipv4_address: 172.20.0.10
+```
+
 
 2. Запустите проект локально с помощью docker compose , добейтесь его стабильной работы: команда ```curl -L http://127.0.0.1:8090``` должна возвращать в качестве ответа время и локальный IP-адрес. Если сервисы не стартуют воспользуйтесь командами: ```docker ps -a ``` и ```docker logs <container_name>``` 
 
+![alt text](image-23.png)
+
 5. Подключитесь к БД mysql с помощью команды ```docker exec <имя_контейнера> mysql -uroot -p<пароль root-пользователя>``` . Введите последовательно команды (не забываем в конце символ ; ): ```show databases; use <имя вашей базы данных(по-умолчанию example)>; show tables; SELECT * from requests LIMIT 10;```.
+
+_выполнил не в контейнере а с хостовой машины - так как все равно арнее поставил Mysql_
+
+![alt text](image-24.png)
+
+![alt text](image-25.png)
+
+```
+mysql> SELECT * from requests order by id desc limit 20;
+```
+![alt text](image-26.png)
 
 6. Остановите проект. В качестве ответа приложите скриншот sql-запроса.
 
+_не понял, что значит "остановить проект"? остановить все контейнеры? тогда как можно получить результат запроса если контейнер с БД остановлен?_
+
+```
+ docker compose down
+```
+![alt text](image-27.png)
+
+Подключиться к БД уже не получается.
+
 ## Задача 4
 1. Запустите в Yandex Cloud ВМ (вам хватит 2 Гб Ram).
+
+_уже сразу так и сделал_
+
 2. Подключитесь к Вм по ssh и установите docker.
+
+_докер установлен при создании ВМ через терраформ:_
+
+```
+  provisioner "remote-exec" {
+    inline = [
+    "sudo apt-get update",
+    "sudo apt-get install -y ca-certificates curl gnupg",
+    "sudo install -m 0755 -d /etc/apt/keyrings",
+    "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
+    "sudo chmod a+r /etc/apt/keyrings/docker.gpg",
+    "echo \"deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \"$(. /etc/os-release && echo \"$VERSION_CODENAME\")\" stable\" |  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
+    "sudo apt-get update",
+    "sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
+    "sudo chmod +x /root/proxy.yaml",
+    "apt install -y mariadb-client-core-10.6 ",
+    "git clone https://github.com/DmitryIll/shvirtd-example-python.git"
+    ]
+  }
+```
+
+
 3. Напишите bash-скрипт, который скачает ваш fork-репозиторий в каталог /opt и запустит проект целиком.
+
+_я скачал в дирректорию root. Но, можно и opt - не принципиально._
+
+```
+    cd /opt
+    git clone https://github.com/DmitryIll/shvirtd-example-python.git
+```
+Опять пришлось новую БД создать:
+![alt text](image-29.png)
+
+
 4. Зайдите на сайт проверки http подключений, например(или аналогичный): ```https://check-host.net/check-http``` и запустите проверку вашего сервиса ```http://<внешний_IP-адрес_вашей_ВМ>:8090```. Таким образом трафик будет направлен в ingress-proxy.
+
+![alt text](image-30.png)
+
+
+
 5. (Необязательная часть) Дополнительно настройте remote ssh context к вашему серверу. Отобразите список контекстов и результат удаленного выполнения ```docker ps -a```
 6. В качестве ответа повторите  sql-запрос и приложите скриншот с данного сервера, bash-скрипт и ссылку на fork-репозиторий.
+
+![alt text](image-31.png)
+
+https://github.com/DmitryIll/shvirtd-example-python.git
+
+Скрипты команд, наработанные когда вручную запускал (в формате заметок):
+
+```
+docker network create --driver=bridge net1 
+
+#Запускаем контейнер с Mysql в сети 'wordpress'. Благо вольюм сздается автоматически!
+docker run -d --network='net1' --hostname='mysql' -v 'db_data:/var/lib/mysql' -e 'MYSQL_ROOT_PASSWORD=12345' -e 'MYSQL_DATABASE=db1' -e 'MYSQL_USER=user' -e 'MYSQL_PASSWORD=12345' mariadb:10.6.4-focal  --default-authentication-plugin='mysql_native_password'
+
+
+export DB_HOST=172.20.0.10 \
+export DB_USER=root \
+export DB_PASSWORD=12345 \
+export DB_NAME=db1 \
+export DB_TABLE=requests \
+
+
+db_host=os.environ.get('DB_HOST')
+db_user=os.environ.get('DB_USER')
+db_password=os.environ.get('DB_PASSWORD')
+db_database=os.environ.get('DB_NAME')
+
+
+apt install mysql-client-core-8.0 
+mysql --password=mypassword --user=me --host=etc
+mysql -p -h 172.20.0.10 -P 3306 -u root --password=12345   --init-command="create database db1;"
+mysql show databases;
+mysql -p -h 172.20.0.10 -P 3306 -u root --password=12345 
+
+mysql> select * from db1.requests;
+```
+
 
 ## Задача 5 (*)
 1. Напишите и задеплойте на вашу облачную ВМ bash скрипт, который произведет резервное копирование БД mysql в директорию "/opt/backup" с помощью запуска в сети "backend" контейнера из образа ```schnitzler/mysqldump``` при помощи ```docker run ...``` команды. Подсказка: "документация образа."
